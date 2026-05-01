@@ -19,7 +19,6 @@ jobs:
           node-version: '20'
 
       - name: Generate code with Claude
-        id: generate
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -28,6 +27,7 @@ jobs:
         run: |
           cat << 'EOF' > generate.mjs
           import https from 'https';
+          import fs from 'fs';
 
           const prompt = `Tu es un développeur senior React/Next.js.
           Stack du projet : Next.js 14, TypeScript, Tailwind CSS, App Router.
@@ -38,7 +38,7 @@ jobs:
           ${process.env.ISSUE_BODY}
           
           Génère un composant React complet pour cette feature.
-          Réponds UNIQUEMENT avec le code, sans explication.
+          Réponds UNIQUEMENT avec le code TypeScript, sans explication, sans balises markdown.
           Le fichier doit être un composant Next.js valide en TypeScript.`;
 
           const data = JSON.stringify({
@@ -54,7 +54,8 @@ jobs:
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': process.env.ANTHROPIC_API_KEY,
-              'anthropic-version': '2023-06-01'
+              'anthropic-version': '2023-06-01',
+              'Content-Length': Buffer.byteLength(data)
             }
           };
 
@@ -64,10 +65,14 @@ jobs:
             res.on('end', () => {
               const response = JSON.parse(body);
               const code = response.content[0].text;
-              const fs = await import('fs');
               fs.writeFileSync('generated-component.tsx', code);
               console.log('Code généré avec succès');
             });
+          });
+
+          req.on('error', (e) => {
+            console.error('Erreur API:', e);
+            process.exit(1);
           });
 
           req.write(data);
@@ -81,22 +86,15 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          # Créer une branche pour cette feature
           BRANCH="feature/issue-${ISSUE_NUMBER}"
           git config user.email "action@github.com"
           git config user.name "AI Code Generator"
           git checkout -b $BRANCH
-
-          # Déplacer le composant généré dans le bon dossier
           mkdir -p src/components
           mv generated-component.tsx src/components/Feature-${ISSUE_NUMBER}.tsx
-
-          # Commit et push
           git add .
           git commit -m "feat: génération automatique - issue #${ISSUE_NUMBER}"
           git push origin $BRANCH
-
-          # Créer la Pull Request vers staging
           gh pr create \
             --title "feat: ${ISSUE_TITLE}" \
             --body "Closes #${ISSUE_NUMBER} - Code généré automatiquement par Claude AI" \
