@@ -89,12 +89,20 @@ jobs:
           BRANCH="feature/issue-${ISSUE_NUMBER}"
           git config user.email "action@github.com"
           git config user.name "AI Code Generator"
+          
+          # Supprimer la branche distante si elle existe déjà
+          git push origin --delete $BRANCH 2>/dev/null || true
+          
+          # Créer une nouvelle branche
           git checkout -b $BRANCH
           mkdir -p src/components
           mv generated-component.tsx src/components/Feature-${ISSUE_NUMBER}.tsx
           git add .
           git commit -m "feat: génération automatique - issue #${ISSUE_NUMBER}"
           git push origin $BRANCH
+
+          # Fermer la PR existante si elle existe puis en créer une nouvelle
+          gh pr close $BRANCH 2>/dev/null || true
           gh pr create \
             --title "feat: ${ISSUE_TITLE}" \
             --body "Closes #${ISSUE_NUMBER} - Code généré automatiquement par Claude AI" \
