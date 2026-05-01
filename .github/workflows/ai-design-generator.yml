@@ -1,0 +1,94 @@
+name: AI Design Generator
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  generate-design:
+    if: contains(github.event.issue.labels.*.name, 'ai-generate')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate design prompt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          cat << 'EOF' > design-prompt.mjs
+          import https from 'https';
+          import fs from 'fs';
+
+          const prompt = `Tu es un expert UI/UX designer.
+          À partir de cette User Story, génère un prompt détaillé pour v0.dev
+          afin de créer un composant React avec Tailwind CSS.
+          
+          User Story : ${process.env.ISSUE_TITLE}
+          Détails : ${process.env.ISSUE_BODY}
+          
+          Le prompt doit décrire précisément :
+          - La mise en page (layout)
+          - Les couleurs et typographie
+          - Les composants UI nécessaires
+          - Les interactions utilisateur
+          
+          Réponds UNIQUEMENT avec le prompt v0.dev, sans explication.`;
+
+          const data = JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+          });
+
+          const options = {
+            hostname: 'api.anthropic.com',
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': process.env.ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01',
+              'Content-Length': Buffer.byteLength(data)
+            }
+          };
+
+          const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+              const response = JSON.parse(body);
+              const designPrompt = response.content[0].text;
+              fs.writeFileSync('design-prompt.txt', designPrompt);
+              console.log('Prompt design généré :');
+              console.log(designPrompt);
+            });
+          });
+
+          req.on('error', (e) => {
+            console.error('Erreur:', e);
+            process.exit(1);
+          });
+
+          req.write(data);
+          req.end();
+          EOF
+          node design-prompt.mjs
+
+      - name: Post design prompt as comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          PROMPT=$(cat design-prompt.txt)
+          gh issue comment $ISSUE_NUMBER --body "## Design généré par IA
+
+          Copiez ce prompt sur [v0.dev](https://v0.dev) pour générer la maquette :
+
+          \`\`\`
+          $PROMPT
+          \`\`\`"
