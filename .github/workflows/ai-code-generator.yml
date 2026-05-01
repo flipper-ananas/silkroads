@@ -1,0 +1,104 @@
+name: AI Code Generator
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  generate-code:
+    if: contains(github.event.issue.labels.*.name, 'ai-generate')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate code with Claude
+        id: generate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          cat << 'EOF' > generate.mjs
+          import https from 'https';
+
+          const prompt = `Tu es un développeur senior React/Next.js.
+          Stack du projet : Next.js 14, TypeScript, Tailwind CSS, App Router.
+          
+          User Story : ${process.env.ISSUE_TITLE}
+          
+          Description et critères d'acceptance :
+          ${process.env.ISSUE_BODY}
+          
+          Génère un composant React complet pour cette feature.
+          Réponds UNIQUEMENT avec le code, sans explication.
+          Le fichier doit être un composant Next.js valide en TypeScript.`;
+
+          const data = JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 4096,
+            messages: [{ role: 'user', content: prompt }]
+          });
+
+          const options = {
+            hostname: 'api.anthropic.com',
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': process.env.ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
+            }
+          };
+
+          const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+              const response = JSON.parse(body);
+              const code = response.content[0].text;
+              const fs = await import('fs');
+              fs.writeFileSync('generated-component.tsx', code);
+              console.log('Code généré avec succès');
+            });
+          });
+
+          req.write(data);
+          req.end();
+          EOF
+          node generate.mjs
+
+      - name: Create branch and pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          # Créer une branche pour cette feature
+          BRANCH="feature/issue-${ISSUE_NUMBER}"
+          git config user.email "action@github.com"
+          git config user.name "AI Code Generator"
+          git checkout -b $BRANCH
+
+          # Déplacer le composant généré dans le bon dossier
+          mkdir -p src/components
+          mv generated-component.tsx src/components/Feature-${ISSUE_NUMBER}.tsx
+
+          # Commit et push
+          git add .
+          git commit -m "feat: génération automatique - issue #${ISSUE_NUMBER}"
+          git push origin $BRANCH
+
+          # Créer la Pull Request vers staging
+          gh pr create \
+            --title "feat: ${ISSUE_TITLE}" \
+            --body "Closes #${ISSUE_NUMBER} - Code généré automatiquement par Claude AI" \
+            --base staging \
+            --head $BRANCH
