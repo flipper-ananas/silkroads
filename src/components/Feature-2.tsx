@@ -5,49 +5,44 @@ export const metadata: Metadata = {
   description: "Welcome to SILKROADS",
 };
 
-function Header() {
-  return (
-    <header className="w-full bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center">
-          <span className="text-2xl font-bold tracking-widest text-gray-900 uppercase">
-            SILKROADS
-          </span>
-        </div>
-        <nav className="flex items-center gap-6">
-          <a
-            href="/"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Home
-          </a>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="w-full bg-white border-t border-gray-200 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <span className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} SILKROADS. All rights reserved.
-        </span>
-        <span className="text-sm text-gray-400 tracking-widest uppercase">
-          SILKROADS
-        </span>
-      </div>
-    </footer>
-  );
-}
-
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      <main className="flex-1" />
-      <Footer />
+    <div className="min-h-screen flex flex-col bg-slate-950">
+      {/* Header */}
+      <header className="bg-gray-950 border-b border-gray-800 px-8 py-5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Brand Title */}
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-amber-400">
+            SILKROADS
+          </h1>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8">
+            <a
+              href="#"
+              className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+            >
+              Home
+            </a>
+            <a
+              href="#"
+              className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+            >
+              Login
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      {/* Main Body - Empty */}
+      <main className="flex-1 bg-slate-950" />
+
+      {/* Footer */}
+      <footer className="bg-gray-950 border-t border-gray-800 py-4">
+        <div className="max-w-7xl mx-auto text-center text-gray-500 text-sm">
+          © 2026 SILKROADS. All rights reserved.
+        </div>
+      </footer>
     </div>
-  );
+  )
 }
