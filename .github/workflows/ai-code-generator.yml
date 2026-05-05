@@ -29,21 +29,55 @@ jobs:
           import https from 'https';
           import fs from 'fs';
 
-          const prompt = `Tu es un développeur senior React/Next.js.
-          Stack du projet : Next.js 14, TypeScript, Tailwind CSS, App Router.
-          
-          User Story : ${process.env.ISSUE_TITLE}
-          
-          Description et critères d'acceptance :
-          ${process.env.ISSUE_BODY}
-          
-          Génère un composant React complet pour cette feature.
-          Réponds UNIQUEMENT avec le code TypeScript, sans explication, sans balises markdown.
-          Le fichier doit être un composant Next.js valide en TypeScript.`;
+          const prompt = `You are a senior React/Next.js developer and UI/UX expert.
+          Stack: Next.js 14, TypeScript, Tailwind CSS, App Router.
+
+          SILKROADS DESIGN SYSTEM - You MUST strictly follow these rules:
+
+          Colors (use ONLY these Tailwind classes):
+          - Primary: text-brand-primary / bg-brand-primary (red #E8393A)
+          - Secondary: text-brand-secondary / bg-brand-secondary (cyan #2CC4D8)
+          - Orange accent: text-brand-orange / bg-brand-orange (#F5A03C)
+          - Light background: bg-brand-light (#F8F9FA)
+          - Main text: text-brand-dark (#1A1A1A)
+          - Secondary text: text-brand-muted (#6B7280)
+          - Borders: border-brand-border (#E5E7EB)
+
+          Typography (use ONLY these classes):
+          - Main titles: text-display or text-h1 with font-bold
+          - Subtitles: text-h2 or text-h3 with font-semibold
+          - Body text: text-body-lg or text-body
+          - Small text: text-small
+
+          Available components to import from '@/components/ui':
+          - Button (variants: primary, secondary, outline, ghost | sizes: sm, md, lg)
+          - Card (hover=true for hover effect)
+          - Container (automatic centering with padding)
+          - Display, H1, H2, H3, BodyLg, Body (typography)
+
+          Design rules:
+          - Page background: bg-white or bg-brand-light
+          - Alternating sections: bg-white then bg-brand-light
+          - Rounded corners: rounded-xl or rounded-2xl
+          - Shadows: shadow-soft, shadow-medium, shadow-strong
+          - Section spacing: py-24
+          - Minimal, airy, professional SaaS design
+          - Mobile-first responsive mandatory
+          - Subtle hover effects on all interactive elements
+          - NEVER use generic Tailwind colors like gray-900, blue-500 etc.
+
+          User Story: ${process.env.ISSUE_TITLE}
+          Description: ${process.env.ISSUE_BODY}
+
+          Generate a complete React component that STRICTLY follows this design system.
+          Respond with TWO blocks separated by ---SEPARATOR---
+          Block 1: The complete component (src/components/Feature-${process.env.ISSUE_NUMBER}.tsx)
+          Block 2: Updated src/app/page.tsx that imports and displays this component
+          ONLY TypeScript code, no explanations, no markdown tags.`;
 
           const data = JSON.stringify({
             model: 'claude-sonnet-4-6',
-            max_tokens: 4096,
+            max_tokens: 8096,
             messages: [{ role: 'user', content: prompt }]
           });
 
@@ -62,49 +96,4 @@ jobs:
           const req = https.request(options, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
-            res.on('end', () => {
-              const response = JSON.parse(body);
-              const code = response.content[0].text;
-              fs.writeFileSync('generated-component.tsx', code);
-              console.log('Code généré avec succès');
-            });
-          });
-
-          req.on('error', (e) => {
-            console.error('Erreur API:', e);
-            process.exit(1);
-          });
-
-          req.write(data);
-          req.end();
-          EOF
-          node generate.mjs
-
-      - name: Create branch and pull request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-        run: |
-          BRANCH="feature/issue-${ISSUE_NUMBER}"
-          git config user.email "action@github.com"
-          git config user.name "AI Code Generator"
-          
-          # Supprimer la branche distante si elle existe déjà
-          git push origin --delete $BRANCH 2>/dev/null || true
-          
-          # Créer une nouvelle branche
-          git checkout -b $BRANCH
-          mkdir -p src/components
-          mv generated-component.tsx src/components/Feature-${ISSUE_NUMBER}.tsx
-          git add .
-          git commit -m "feat: génération automatique - issue #${ISSUE_NUMBER}"
-          git push origin $BRANCH
-
-          # Fermer la PR existante si elle existe puis en créer une nouvelle
-          gh pr close $BRANCH 2>/dev/null || true
-          gh pr create \
-            --title "feat: ${ISSUE_TITLE}" \
-            --body "Closes #${ISSUE_NUMBER} - Code généré automatiquement par Claude AI" \
-            --base staging \
-            --head $BRANCH
+            res.on('
