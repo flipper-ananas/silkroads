@@ -1,5 +1,5 @@
-import HomePage from '@/components/Feature-2';
+import HomepageLayout from "@/components/Feature-2";
 
 export default function Page() {
-  return <HomePage />;
+  return <HomepageLayout />;
 }
