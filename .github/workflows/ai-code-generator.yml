@@ -25,55 +25,48 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          cat << 'EOF' > generate.mjs
-          import https from 'https';
-          import fs from 'fs';
+          node -e "
+          const https = require('https');
+          const fs = require('fs');
 
-          const prompt = `You are a senior React/Next.js developer and UI/UX expert.
-          Stack: Next.js 14, TypeScript, Tailwind CSS, App Router.
-
-          SILKROADS DESIGN SYSTEM - You MUST strictly follow these rules:
-
-          Colors (use ONLY these Tailwind classes):
-          - Primary: text-brand-primary / bg-brand-primary (red #E8393A)
-          - Secondary: text-brand-secondary / bg-brand-secondary (cyan #2CC4D8)
-          - Orange accent: text-brand-orange / bg-brand-orange (#F5A03C)
-          - Light background: bg-brand-light (#F8F9FA)
-          - Main text: text-brand-dark (#1A1A1A)
-          - Secondary text: text-brand-muted (#6B7280)
-          - Borders: border-brand-border (#E5E7EB)
-
-          Typography (use ONLY these classes):
-          - Main titles: text-display or text-h1 with font-bold
-          - Subtitles: text-h2 or text-h3 with font-semibold
-          - Body text: text-body-lg or text-body
-          - Small text: text-small
-
-          Available components to import from '@/components/ui':
-          - Button (variants: primary, secondary, outline, ghost | sizes: sm, md, lg)
-          - Card (hover=true for hover effect)
-          - Container (automatic centering with padding)
-          - Display, H1, H2, H3, BodyLg, Body (typography)
-
-          Design rules:
-          - Page background: bg-white or bg-brand-light
-          - Alternating sections: bg-white then bg-brand-light
-          - Rounded corners: rounded-xl or rounded-2xl
-          - Shadows: shadow-soft, shadow-medium, shadow-strong
-          - Section spacing: py-24
-          - Minimal, airy, professional SaaS design
-          - Mobile-first responsive mandatory
-          - Subtle hover effects on all interactive elements
-          - NEVER use generic Tailwind colors like gray-900, blue-500 etc.
-
-          User Story: ${process.env.ISSUE_TITLE}
-          Description: ${process.env.ISSUE_BODY}
-
-          Generate a complete React component that STRICTLY follows this design system.
-          Respond with TWO blocks separated by ---SEPARATOR---
-          Block 1: The complete component (src/components/Feature-${process.env.ISSUE_NUMBER}.tsx)
-          Block 2: Updated src/app/page.tsx that imports and displays this component
-          ONLY TypeScript code, no explanations, no markdown tags.`;
+          const prompt = 'You are a senior React/Next.js developer and UI/UX expert.\n' +
+          'Stack: Next.js 14, TypeScript, Tailwind CSS, App Router.\n\n' +
+          'SILKROADS DESIGN SYSTEM - You MUST strictly follow these rules:\n\n' +
+          'Colors (use ONLY these Tailwind classes):\n' +
+          '- Primary: text-brand-primary / bg-brand-primary (red #E8393A)\n' +
+          '- Secondary: text-brand-secondary / bg-brand-secondary (cyan #2CC4D8)\n' +
+          '- Orange accent: text-brand-orange / bg-brand-orange (#F5A03C)\n' +
+          '- Light background: bg-brand-light (#F8F9FA)\n' +
+          '- Main text: text-brand-dark (#1A1A1A)\n' +
+          '- Secondary text: text-brand-muted (#6B7280)\n' +
+          '- Borders: border-brand-border (#E5E7EB)\n\n' +
+          'Typography (use ONLY these classes):\n' +
+          '- Main titles: text-display or text-h1 with font-bold\n' +
+          '- Subtitles: text-h2 or text-h3 with font-semibold\n' +
+          '- Body text: text-body-lg or text-body\n' +
+          '- Small text: text-small\n\n' +
+          'Available components to import from @/components/ui:\n' +
+          '- Button (variants: primary, secondary, outline, ghost | sizes: sm, md, lg)\n' +
+          '- Card (hover=true for hover effect)\n' +
+          '- Container (automatic centering with padding)\n' +
+          '- Display, H1, H2, H3, BodyLg, Body (typography)\n\n' +
+          'Design rules:\n' +
+          '- Page background: bg-white or bg-brand-light\n' +
+          '- Alternating sections: bg-white then bg-brand-light\n' +
+          '- Rounded corners: rounded-xl or rounded-2xl\n' +
+          '- Shadows: shadow-soft, shadow-medium, shadow-strong\n' +
+          '- Section spacing: py-24\n' +
+          '- Minimal, airy, professional SaaS design\n' +
+          '- Mobile-first responsive mandatory\n' +
+          '- Subtle hover effects on all interactive elements\n' +
+          '- NEVER use generic Tailwind colors like gray-900, blue-500 etc.\n\n' +
+          'User Story: ' + process.env.ISSUE_TITLE + '\n' +
+          'Description: ' + process.env.ISSUE_BODY + '\n\n' +
+          'Generate a complete React component that STRICTLY follows this design system.\n' +
+          'Respond with TWO blocks separated by ---SEPARATOR---\n' +
+          'Block 1: The complete component (src/components/Feature-' + process.env.ISSUE_NUMBER + '.tsx)\n' +
+          'Block 2: Updated src/app/page.tsx that imports and displays this component\n' +
+          'ONLY TypeScript code, no explanations, no markdown tags.';
 
           const data = JSON.stringify({
             model: 'claude-sonnet-4-6',
@@ -96,4 +89,56 @@ jobs:
           const req = https.request(options, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
-            res.on('
+            res.on('end', () => {
+              const response = JSON.parse(body);
+              const fullCode = response.content[0].text;
+              const parts = fullCode.split('---SEPARATOR---');
+              if (parts.length >= 2) {
+                fs.writeFileSync('generated-component.tsx', parts[0].trim());
+                fs.writeFileSync('generated-page.tsx', parts[1].trim());
+                console.log('Component and page generated successfully');
+              } else {
+                fs.writeFileSync('generated-component.tsx', fullCode.trim());
+                fs.writeFileSync('generated-page.tsx', 'import Feature from \"@/components/Feature-' + process.env.ISSUE_NUMBER + '\";\n\nexport default function Home() {\n  return <Feature />;\n}');
+                console.log('Component generated, default page created');
+              }
+            });
+          });
+
+          req.on('error', (e) => {
+            console.error('API Error:', e);
+            process.exit(1);
+          });
+
+          req.write(data);
+          req.end();
+          "
+
+      - name: Create branch and pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          BRANCH="feature/issue-${ISSUE_NUMBER}"
+          git config user.email "action@github.com"
+          git config user.name "AI Code Generator"
+
+          git push origin --delete $BRANCH 2>/dev/null || true
+
+          git checkout -b $BRANCH
+          mkdir -p src/components
+
+          mv generated-component.tsx src/components/Feature-${ISSUE_NUMBER}.tsx
+          mv generated-page.tsx src/app/page.tsx
+
+          git add .
+          git commit -m "feat: auto-generated feature - issue #${ISSUE_NUMBER}"
+          git push origin $BRANCH
+
+          gh pr close $BRANCH 2>/dev/null || true
+          gh pr create \
+            --title "feat: ${ISSUE_TITLE}" \
+            --body "Closes #${ISSUE_NUMBER} - Code auto-generated by Claude AI" \
+            --base staging \
+            --head $BRANCH
