@@ -1,40 +1,46 @@
-import React from 'react';
-import { Container } from '@/components/ui';
-import { Button } from '@/components/ui';
+import React from "react";
+import { Container } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 const Header: React.FC = () => {
   return (
-    <header className="w-full bg-white border-b border-brand-border shadow-soft">
+    <header className="w-full bg-white border-b border-brand-border shadow-soft sticky top-0 z-50">
       <Container>
         <div className="flex items-center justify-between h-16 md:h-20">
           <div className="flex items-center gap-2">
-            <span className="text-h2 font-bold text-brand-primary tracking-widest">
+            <span className="text-h2 font-bold text-brand-primary tracking-tight">
               SILKROADS
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a
               href="#"
-              className="text-body text-brand-dark hover:text-brand-primary transition-colors duration-200"
+              className="text-body text-brand-muted hover:text-brand-primary transition-colors duration-200"
             >
               Home
             </a>
             <a
               href="#"
-              className="text-body text-brand-dark hover:text-brand-primary transition-colors duration-200"
+              className="text-body text-brand-muted hover:text-brand-primary transition-colors duration-200"
             >
-              About
+              Features
             </a>
             <a
               href="#"
-              className="text-body text-brand-dark hover:text-brand-primary transition-colors duration-200"
+              className="text-body text-brand-muted hover:text-brand-primary transition-colors duration-200"
             >
-              Contact
+              Pricing
+            </a>
+            <a
+              href="#"
+              className="text-body text-brand-muted hover:text-brand-primary transition-colors duration-200"
+            >
+              About
             </a>
           </nav>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
-              Sign In
+              Log in
             </Button>
             <Button variant="primary" size="sm">
               Get Started
@@ -52,82 +58,73 @@ const Footer: React.FC = () => {
       <Container>
         <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="flex flex-col gap-3">
-            <span className="text-h3 font-bold text-brand-primary tracking-widest">
+            <span className="text-h3 font-bold text-white tracking-tight">
               SILKROADS
             </span>
-            <p className="text-small text-brand-muted max-w-xs">
-              Your gateway to seamless digital experiences along the modern silk roads of commerce.
+            <p className="text-body text-brand-muted max-w-xs">
+              Your modern SaaS platform. Built for teams who move fast.
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <span className="text-body font-semibold text-white">
-              Navigation
+            <span className="text-small font-semibold text-brand-secondary uppercase tracking-widest">
+              Product
             </span>
             <ul className="flex flex-col gap-2">
-              <li>
-                <a
-                  href="#"
-                  className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
-                >
-                  About
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
-                >
-                  Contact
-                </a>
-              </li>
+              {["Features", "Pricing", "Changelog", "Roadmap"].map((item) => (
+                <li key={item}>
+                  <a
+                    href="#"
+                    className="text-body text-brand-muted hover:text-white transition-colors duration-200"
+                  >
+                    {item}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
           <div className="flex flex-col gap-3">
-            <span className="text-body font-semibold text-white">
-              Legal
+            <span className="text-small font-semibold text-brand-secondary uppercase tracking-widest">
+              Company
             </span>
             <ul className="flex flex-col gap-2">
-              <li>
-                <a
-                  href="#"
-                  className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
-                >
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
-                >
-                  Terms of Service
-                </a>
-              </li>
+              {["About", "Blog", "Careers", "Contact"].map((item) => (
+                <li key={item}>
+                  <a
+                    href="#"
+                    className="text-body text-brand-muted hover:text-white transition-colors duration-200"
+                  >
+                    {item}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
-        <div className="border-t border-brand-border py-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="py-6 border-t border-brand-border flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-small text-brand-muted">
-            &copy; {new Date().getFullYear()} SILKROADS. All rights reserved.
+            © {new Date().getFullYear()} SILKROADS. All rights reserved.
           </p>
-          <p className="text-small text-brand-muted">
-            Built with care &amp; precision.
-          </p>
+          <div className="flex items-center gap-4">
+            <a
+              href="#"
+              className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="#"
+              className="text-small text-brand-muted hover:text-brand-secondary transition-colors duration-200"
+            >
+              Terms of Service
+            </a>
+          </div>
         </div>
       </Container>
     </footer>
   );
 };
 
-const HomePage: React.FC = () => {
+const HomepageLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
@@ -137,4 +134,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;
+export default HomepageLayout;
